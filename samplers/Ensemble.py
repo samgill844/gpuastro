@@ -29,6 +29,7 @@ def Parallel_Sampler_CPU_parallel(lnprob, args, cpu_loglikliehoods, cpu_position
                 Z = ((a - 1.) * random.random() + 1) ** 2. / a
                 #cpu_positions[i, j, k] = cpu_positions[i-1, j, k]  - Z*(cpu_positions[i-1, j, k] - cpu_positions[i-1, index, k])
                 cpu_positions[i, j, k] = cpu_positions[i-1, index, k]  - Z*(cpu_positions[i-1, index, k] - cpu_positions[i-1, j, k])
+                
             # Evaluate the trial solution
             cpu_loglikliehoods[i, j] = lnprob(cpu_positions[i, j], args)
 
@@ -61,6 +62,7 @@ def Parallel_Sampler_CPU(lnprob, args, cpu_loglikliehoods, cpu_positions, a=2.0)
                 Z = ((a - 1.) * random.random() + 1) ** 2. / a
                 #cpu_positions[i, j, k] = cpu_positions[i-1, j, k]  - Z*(cpu_positions[i-1, j, k] - cpu_positions[i-1, index, k])
                 cpu_positions[i, j, k] = cpu_positions[i-1, index, k]  - Z*(cpu_positions[i-1, index, k] - cpu_positions[i-1, j, k])
+
             # Evaluate the trial solution
             cpu_loglikliehoods[i, j] = lnprob(cpu_positions[i, j], args)
 
