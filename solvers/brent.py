@@ -3,11 +3,6 @@ from gpuastro.utilities.fortran_ports import clip, sign
 
 __all__ = ['brent']
 
-
-
-
-
-
 ###################################################
 # Brent minimisation
 ###################################################
