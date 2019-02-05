@@ -45,7 +45,7 @@ def _Parallel_Sampler_CPU(lnprob, args, cpu_loglikliehoods, cpu_positions, a=2.0
     
     # First we need to evaluate the starting position
     for i in range(cpu_positions.shape[1]) : cpu_loglikliehoods[0, i] = lnprob(cpu_positions[0, i], args)
-    
+
     # Iterate over the steps
     for i in range(1, cpu_positions.shape[0]):
 
@@ -79,11 +79,11 @@ def Ensemble_sampler_numba(lnprob, args, p0, nsteps, a=2.0, target='cpu', thread
     ndim = p0.shape[1]
 
     # Allocate the positions
-    positions = np.empty((nsteps, nwalkers, ndim), dtype = np.float32)
+    positions = np.empty((nsteps, nwalkers, ndim), dtype = np.float64)
     positions[0] = p0
 
     # Allocate the loglike array
-    loglike = np.empty((nsteps, nwalkers), dtype = np.float32)
+    loglike = np.empty((nsteps, nwalkers), dtype = np.float64)
 
 
     if target=='cpu'    : _Parallel_Sampler_CPU(lnprob, args, loglike, positions, a)
