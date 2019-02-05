@@ -124,7 +124,8 @@ if numba.cuda.is_available():
         lower = int(j / threads_per_block)
         
         # First we need to evaluate the starting position for the walker
-        gpu_loglikliehoods[0, j] = lnprob(gpu_positions[0, j,:], args)
+        if j==0 : print(lnprob(gpu_positions[0, 0], args))
+        #for i in range(gpu_positions.shape[1]) : gpu_loglikliehoods[0, i] = lnprob(gpu_positions[0, i], args)
         
         # Iterate over the steps
         for i in range(1, gpu_positions.shape[0]):
@@ -159,7 +160,7 @@ if numba.cuda.is_available():
                     gpu_loglikliehoods[i, j] =  gpu_loglikliehoods[i-1, j]
                     for k in range(gpu_positions.shape[2]) : gpu_positions[i, j, k] = gpu_positions[i-1, j, k]
 
-
+        
 
 '''
 @numba.njit

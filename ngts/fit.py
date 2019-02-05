@@ -4,7 +4,7 @@
 import numpy as np 
 import numba, numba.cuda 
 import math 
-from gpuastro.binarystar import lc_loglike, lc
+from gpuastro.binarystar import lc_loglike, lc, lc_loglike_gpu
 from gpuastro.utilities import htoc1_, htoc2__
 from gpuastro.samplers import Ensemble_sampler_numba
 import matplotlib.pyplot as plt 
@@ -49,7 +49,7 @@ def lnlike(theta, args):
 
     incl = 180*math.acos(theta[2]*theta[4])/math.pi
 
-    return lc_loglike(time=args[0], mag=args[1], mag_err=args[2], mag_jitter = theta[7],mag_zp=theta[7],
+    return   lc_loglike(time=args[0], mag=args[1], mag_err=args[2], mag_jitter = theta[7],mag_zp=theta[7],
                       t_zero = theta[0], period=theta[1], radius_1=theta[2] , k=theta[3], incl=incl, 
                       ldc_1_1=ldc_1_1, ldc_1_2=ldc_1_1 )
 
@@ -84,7 +84,7 @@ def get_phase_model(theta):
 def phaser(time, t_zero, period, offset=0.5):
     return ((time - t_zero + offset*period) / period)  - np.floor((time - t_zero + offset*period) / period) -offset
 
-def fit_ngts_lighcurve(filename, T0, P, radius_1=0.2, k = 0.2, zp = 0.0, nsteps = 1000,phase_cut = 0.1, NOI='test', burn_in = -1):
+def fit_ngts_lighcurve(filename, T0, P, radius_1=0.2, k = 0.2, zp = 0.0, nsteps = 1000,phase_cut = 0.1, NOI='test', burn_in = -1, walkermult=4):
     # Open the filename
     hjd,  mag,  mag_err,  rel_flux, rel_flux_err = np.loadtxt(filename).T
     phase = phaser(hjd, T0, P, offset=0.5)
@@ -102,7 +102,7 @@ def fit_ngts_lighcurve(filename, T0, P, radius_1=0.2, k = 0.2, zp = 0.0, nsteps 
     phase, model = get_phase_model(theta)
     ax.plot(phase, model,'r')
     ax.invert_yaxis()
-    ax.set_xlim(-0.1,0.1)
+    ax.set_xlim(-phase_cut,phase_cut)
     ax.set_ylabel('Mag')
     ax.set_xlabel('Phase')
     fig.savefig(NOI+'_initial.png')
@@ -110,11 +110,11 @@ def fit_ngts_lighcurve(filename, T0, P, radius_1=0.2, k = 0.2, zp = 0.0, nsteps 
     plt.close()
 
     ndim = len(theta)
-    nwalkers = 4*ndim 
+    nwalkers = walkermult*ndim 
     p0 = np.array([np.random.normal(theta,1e-6) for i in range(nwalkers)])
 
-    positions, loglike = Ensemble_sampler_numba(lnprob, args, p0, 1, a=2.0, target='cpup')
-    positions, loglike = Ensemble_sampler_numba(lnprob, args, p0, nsteps, a=2.0, target='cpup')
+    positions, loglike = Ensemble_sampler_numba(lnprob, args, p0, 1, a=2.0, target='cpu')
+    positions, loglike = Ensemble_sampler_numba(lnprob, args, p0, nsteps, a=2.0, target='cpu')
 
     best_idx = np.argmax(loglike.flatten())
     best_theta = positions.reshape((4*len(theta)*nsteps, len(theta)))[best_idx]
@@ -127,7 +127,7 @@ def fit_ngts_lighcurve(filename, T0, P, radius_1=0.2, k = 0.2, zp = 0.0, nsteps 
     phase, model = get_phase_model(best_theta)
     ax.plot(phase, model,'r')
     ax.invert_yaxis()
-    ax.set_xlim(-0.1,0.1)
+    ax.set_xlim(-phase_cut,phase_cut)
     ax.set_ylabel('Mag')
     ax.set_xlabel('Phase')
     fig.savefig(NOI+'_final.png')
@@ -147,8 +147,13 @@ def fit_ngts_lighcurve(filename, T0, P, radius_1=0.2, k = 0.2, zp = 0.0, nsteps 
     positions_corner = positions[burn_in:,:,:]
     positions_corner = positions_corner.reshape(positions_corner.shape[0]*positions_corner.shape[1], positions_corner.shape[2])
     fig2 = corner.corner(positions_corner, labels = theta_names)
-    fig.savefig(NOI+'_corner.png')
+    fig.savefig(NOI+'_corner.png')    
 
     plt.show()
+
+
+
+
+
 
     return positions, loglike

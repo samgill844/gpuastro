@@ -307,7 +307,7 @@ if numba.cuda.is_available():
         return LC
 
 
-
+    @numba.njit
     def lc_loglike_gpu(time,\
             mag, mag_err, mag_jitter, mag_zp,\
             radius_1=0.2, k=0.2, fs=0.0, fc=0.0,\
